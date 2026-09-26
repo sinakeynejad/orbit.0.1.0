@@ -1,0 +1,9 @@
+pydantic>=2.9,<3
+pydantic-settings>=2.5,<3
+httpx>=0.27,<1
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+websockets>=13,<16
+python-multipart>=0.0.18,<1
+pillow>=11,<13
+pyperclip>=1.9,<2

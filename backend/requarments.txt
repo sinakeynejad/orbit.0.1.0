@@ -1,0 +1,2 @@
+# Deprecated spelling; use requirements.txt.
+-r requirements.txt

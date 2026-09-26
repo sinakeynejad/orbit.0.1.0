@@ -1,0 +1,15 @@
+.venv/
+.env
+__pycache__/
+.pytest_cache/
+*.pyc
+workspace/
+pytest-cache-files-*/
+node_modules/
+frontend/dist/
+build/
+dist/
+*.spec
+*.sqlite3
+.pnpm-store/
+.delivery-backups/

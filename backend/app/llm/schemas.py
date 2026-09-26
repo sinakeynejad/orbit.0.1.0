@@ -47,3 +47,9 @@ class Message(BaseModel):
 class LLMResponse(BaseModel):
     content: str | None = None
     tool_calls: list[ToolCall] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def require_output(self) -> "LLMResponse":
+        if not self.tool_calls and (not self.content or not self.content.strip()):
+            raise ValueError("Response must contain text or tool calls.")
+        return self

@@ -1,3 +1,6 @@
+import json
+import os
+import secrets
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -24,8 +27,17 @@ class Settings(BaseSettings):
         hide_input_in_errors=True,
     )
 
-    llm_provider: Literal["openai", "ollama"] = "openai"
-    llm_model: str = Field(min_length=1)
+    api_token: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
+    data_dir: Path = Path(os.environ.get("LOCALAPPDATA", str(BACKEND_DIR))) / "DesktopAssistant"
+    voice_api_key: SecretStr | None = None
+    stt_model: str = "whisper-1"
+    tts_model: str = "tts-1"
+    workspace_dir: Path = Path(os.environ.get("LOCALAPPDATA", str(BACKEND_DIR))) / "DesktopAssistant" / "workspace"
+    allowed_applications: dict[str, str] = Field(default_factory=dict)
+    agent_max_steps: int = Field(default=8, ge=1, le=20)
+
+    llm_provider: Literal["openai", "ollama"] = "ollama"
+    llm_model: str = ""
 
     llm_api_key: SecretStr | None = None
     llm_base_url: HttpUrl | None = None
@@ -51,6 +63,7 @@ class Settings(BaseSettings):
 
     @field_validator(
         "llm_api_key",
+        "voice_api_key",
         "llm_base_url",
         mode="before",
     )
@@ -60,20 +73,12 @@ class Settings(BaseSettings):
             return value.strip() or None
         return value
 
-    @model_validator(mode="after")
-    def validate_provider_settings(self) -> "Settings":
-        if self.llm_provider == "openai":
-            if self.llm_api_key is None:
-                raise ValueError(
-                    "LLM_API_KEY is required for the openai provider."
-                )
-
-            if not self.llm_api_key.get_secret_value().strip():
-                raise ValueError("LLM_API_KEY cannot be blank.")
-
-        return self
 
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    return Settings()
+    defaults = Settings()
+    path = defaults.data_dir / "settings.json"
+    if path.exists():
+        return Settings(**json.loads(path.read_text(encoding="utf-8")))
+    return defaults
