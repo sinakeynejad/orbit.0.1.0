@@ -66,10 +66,14 @@ async def update_settings(body: SettingsUpdate, request: Request):
         secret = getattr(config, field)
         raw[field] = secret.get_secret_value() if secret else None
     path = config.data_dir / "settings.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(".tmp")
-    temp.write_text(json.dumps(raw, indent=2), encoding="utf-8")
-    temp.replace(path)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temp.write_text(json.dumps(raw, indent=2), encoding="utf-8")
+        temp.replace(path)
+    except OSError as exc:
+        await new_provider.aclose()
+        raise AssistantError("Cannot save settings. Check available disk space and folder permissions.") from exc
     old = state.assistant.orchestrator.provider
     state.assistant.orchestrator.provider = new_provider
     state.config = config
@@ -89,7 +93,10 @@ async def transcribe(request: Request, file: UploadFile = File(...)):
     await file.close()
     if not data or len(data) > 10 * 1024 * 1024:
         raise AssistantError("Recording must be between 1 byte and 10 MB.")
-    return {"text": await OpenAISpeechToText(request.app.state.config).transcribe(data, "recording.webm")}
+    extension = Path(file.filename or "").suffix.lower()
+    if extension not in {".webm", ".wav", ".mp3", ".mp4", ".m4a", ".mpeg", ".mpga", ".ogg", ".flac"}:
+        raise AssistantError("Unsupported audio format.")
+    return {"text": await OpenAISpeechToText(request.app.state.config).transcribe(data, "recording" + extension)}
 
 
 class SpeechRequest(BaseModel):

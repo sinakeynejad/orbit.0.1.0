@@ -22,7 +22,12 @@ async def websocket_chat(socket: WebSocket):
     if session_id and session_id not in assistant.sessions:
         await socket.close(code=1008)
         return
-    session_id = session_id or assistant.create_session()
+    try:
+        session_id = session_id or assistant.create_session()
+    except AssistantError as exc:
+        await socket.send_json({"type": "error", "message": str(exc)})
+        await socket.close(code=1013)
+        return
     task = None
     pending = {}
     await socket.send_json({"type": "session", "session_id": session_id})
@@ -60,7 +65,11 @@ async def websocket_chat(socket: WebSocket):
                 continue
             kind = data.get("type")
             if kind == "confirmation":
-                future = pending.get(data.get("confirmation_id"))
+                confirmation_id = data.get("confirmation_id")
+                if not isinstance(confirmation_id, str) or not isinstance(data.get("approved"), bool):
+                    await socket.send_json({"type": "error", "message": "Invalid confirmation event."})
+                    continue
+                future = pending.get(confirmation_id)
                 if future and not future.done():
                     future.set_result(data.get("approved") is True)
                 elif pending:

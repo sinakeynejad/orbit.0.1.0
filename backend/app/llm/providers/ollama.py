@@ -41,6 +41,8 @@ class OllamaProvider(LLMProvider):
             response = await self.client.post("api/chat", json=payload)
             response.raise_for_status()
             data = response.json()
+            if data.get("done") is False:
+                raise ProviderError("Language model returned an incomplete response. Please retry.")
             if data.get("done_reason") == "length":
                 raise ProviderError("Model output reached its token limit; increase LLM_MAX_TOKENS.")
             message = data["message"]

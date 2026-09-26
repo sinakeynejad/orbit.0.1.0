@@ -16,4 +16,5 @@ jobs:
         working-directory: backend
       - run: npm install -g pnpm@11.19.0
       - run: pnpm --dir frontend install --frozen-lockfile --ignore-scripts
+      - run: pnpm --dir frontend test
       - run: pnpm --dir frontend build
