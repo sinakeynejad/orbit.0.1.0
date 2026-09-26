@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from app.core.config import Settings
 from app.core.exceptions import AssistantError
 from app.llm.client import create_provider
+from app.llm.connection import check_connection, failure
 from app.voice.stt import OpenAISpeechToText
 from app.voice.tts import OpenAITextToSpeech
 
@@ -39,6 +40,33 @@ class SettingsUpdate(BaseModel):
     voice_api_key: str | None = None
     stt_model: str = Field(default="whisper-1", min_length=1, max_length=100)
     tts_model: str = Field(default="tts-1", min_length=1, max_length=100)
+
+
+class ConnectionCheck(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    llm_provider: str
+    llm_model: str = Field(max_length=200)
+    llm_base_url: str = Field(default="", max_length=2000)
+    llm_api_key: str | None = Field(default=None, max_length=4096)
+
+
+@router.post("/settings/test-connection")
+async def test_connection(body: ConnectionCheck, request: Request):
+    saved = request.app.state.config
+    values = saved.model_dump()
+    values.update(body.model_dump(exclude_none=True))
+    values["llm_timeout_seconds"] = 30
+    try:
+        config = Settings(_env_file=None, **values)
+    except ValidationError:
+        return failure("invalid_settings", "Check the provider and Base URL (use http:// or https://).")
+    # Never forward a stored credential to a newly entered service endpoint.
+    default_url = "https://api.openai.com/v1"
+    saved_url = str(saved.llm_base_url or default_url).rstrip("/")
+    test_url = str(config.llm_base_url or default_url).rstrip("/")
+    if config.llm_provider == "openai" and not body.llm_api_key and (saved.llm_provider != "openai" or saved_url != test_url):
+        return failure("key_required", "Enter an API key for this provider and Base URL before testing.")
+    return await check_connection(config)
 
 
 @router.put("/settings")
