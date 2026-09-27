@@ -82,3 +82,26 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 
 .conversation-search { font-size:11px; margin-bottom:12px; }
 @media(max-width:600px){.conversation-search{display:none}}
+
+.message>div:last-child { min-width:0; flex:1; }
+.markdown { white-space:normal; }
+.markdown p { margin:0 0 12px; }
+.markdown h1,.markdown h2,.markdown h3 { line-height:1.4; margin:18px 0 10px; }
+.markdown h1 { font-size:24px; }.markdown h2 { font-size:21px; }.markdown h3 { font-size:18px; }
+.markdown ul,.markdown ol { padding-inline-start:24px; }
+.markdown blockquote { margin:12px 0; padding:4px 14px; border-inline-start:3px solid #888; color:#bbb; }
+.markdown a { color:#fff; text-decoration:underline; overflow-wrap:anywhere; }
+.markdown code { font-family:Consolas,monospace; font-size:12px; background:#292929; padding:2px 5px; border-radius:4px; }
+.code-block { margin:14px 0; border:1px solid #444; border-radius:9px; overflow:hidden; background:#171717; }
+.code-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 12px; background:#242424; font-size:11px; }
+.code-block pre { margin:0; padding:14px; overflow-x:auto; white-space:pre; line-height:1.7; }
+.code-block pre code { padding:0; background:none; }
+.copy-control { display:inline-flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:11px; color:#bbb; }
+.copy-control button { border:1px solid #555; padding:5px 8px; border-radius:5px; font-size:11px; }
+.copy-control button:hover { color:#fff; border-color:#aaa; }
+.table-scroll { overflow-x:auto; margin:14px 0; }
+.markdown table { border-collapse:collapse; font-size:13px; min-width:100%; }
+.markdown th,.markdown td { border:1px solid #444; padding:9px 12px; text-align:start; }
+.markdown th { background:#292929; color:#fff; }
+.markdown input[type=checkbox] { width:auto; margin-inline-end:6px; }
+.markdown hr { border:0; border-top:1px solid #444; margin:18px 0; }

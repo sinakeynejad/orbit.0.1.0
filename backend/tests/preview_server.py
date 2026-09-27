@@ -10,7 +10,7 @@ from app.llm.schemas import LLMResponse, ToolCall
 class PreviewProvider(LLMProvider):
     async def generate(self, messages, tools=None):
         if messages[-1].role.value == "tool":
-            return LLMResponse(content="Test completed. The tool result has been received.")
+            return LLMResponse(content="## Test completed\n\nThe tool result has been received. **سلام!**\n\n| Feature | Status |\n| --- | --- |\n| Markdown | Ready |\n| Copy code | Ready |\n\n```python\nprint(\"Hello, Orbit!\")\n```")
         return LLMResponse(tool_calls=[ToolCall(id="preview-call",name="create_folder",arguments={"path":"ui-test-folder"})])
 
 if __name__ == "__main__":
