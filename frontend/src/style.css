@@ -75,3 +75,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .test-success { border: 1px solid #999; }
 .test-failure { border: 1px dashed #aaa; }
 .recording { color: #fff; outline: 1px solid #aaa; border-radius: 6px; }
+
+.model-picker { border:1px solid #383838; border-radius:10px; padding:0 12px 12px; margin:12px 0; }
+.model-picker button { border:1px solid #666; border-radius:6px; padding:7px 10px; font-size:12px; }
+.model-picker p { margin-bottom:0; }

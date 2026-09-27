@@ -1,4 +1,6 @@
 import json
+import httpx
+import asyncio
 from pathlib import Path
 from app.tools.factory import create_registry
 from fastapi import APIRouter, Request, Response, UploadFile, File
@@ -67,6 +69,44 @@ async def test_connection(body: ConnectionCheck, request: Request):
     if config.llm_provider == "openai" and not body.llm_api_key and (saved.llm_provider != "openai" or saved_url != test_url):
         return failure("key_required", "Enter an API key for this provider and Base URL before testing.")
     return await check_connection(config)
+
+
+class OllamaModelsRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    llm_base_url: str = Field(default="", max_length=2000)
+
+
+@router.post("/settings/ollama-models")
+async def ollama_models(body: OllamaModelsRequest):
+    try:
+        config = Settings(_env_file=None, llm_base_url=body.llm_base_url)
+    except ValidationError:
+        raise AssistantError("Enter a valid Ollama Base URL starting with http:// or https://.")
+    base_url = str(config.llm_base_url or "http://127.0.0.1:11434").rstrip("/") + "/"
+    try:
+        async with asyncio.timeout(10):
+            async with httpx.AsyncClient(base_url=base_url, timeout=10, trust_env=False) as client:
+                response = await client.get("api/tags")
+                response.raise_for_status()
+                data = response.json()
+        models = data["models"]
+        if not isinstance(models, list):
+            raise ValueError()
+        names = []
+        for model in models:
+            name = model["name"]
+            if not isinstance(name, str) or not name.strip() or len(name) > 200:
+                raise ValueError()
+            names.append(name)
+        return {"models": sorted(set(names), key=str.casefold)}
+    except (TimeoutError, httpx.TimeoutException):
+        raise AssistantError("Ollama did not respond within 10 seconds. Check that it is running, then refresh.")
+    except httpx.HTTPStatusError:
+        raise AssistantError("Ollama rejected the model list request. Check its Base URL and server access.")
+    except httpx.HTTPError:
+        raise AssistantError("Cannot reach Ollama. Start Ollama and check the Base URL, then refresh.")
+    except (KeyError, TypeError, ValueError):
+        raise AssistantError("The server returned an invalid model list. Check that the Base URL points to Ollama.")
 
 
 @router.put("/settings")
