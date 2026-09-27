@@ -54,6 +54,15 @@ class Settings(BaseSettings):
         allow_inf_nan=False,
     )
 
+    @property
+    def speech_api_key(self):
+        if self.voice_api_key:
+            return self.voice_api_key
+        endpoint = str(self.llm_base_url or "https://api.openai.com/v1").rstrip("/")
+        if self.llm_provider == "openai" and endpoint == "https://api.openai.com/v1":
+            return self.llm_api_key
+        return None
+
     @field_validator("llm_model", mode="before")
     @classmethod
     def strip_model_name(cls, value: object) -> object:

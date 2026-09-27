@@ -36,7 +36,7 @@ class FileTools:
         path = Path(value)
         if path.is_absolute() or path.drive or ":" in value:
             raise ToolError("Use a relative path inside the workspace.")
-        if any(part in {".trash"} or part.endswith((" ", ".")) or part.split(".")[0].upper() in
+        if any(part.casefold() in {".trash"} or part.endswith((" ", ".")) or part.split(".")[0].upper() in
                {"CON", "PRN", "AUX", "NUL", *[f"COM{i}" for i in range(1,10)], *[f"LPT{i}" for i in range(1,10)]}
                for part in path.parts if part not in {".", ".."}):
             raise ToolError("Reserved path component.")

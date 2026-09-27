@@ -8,7 +8,7 @@ class OpenAISpeechToText(SpeechToText):
         self.settings = settings
 
     async def transcribe(self, data, filename):
-        key = self.settings.voice_api_key or self.settings.llm_api_key
+        key = self.settings.speech_api_key
         if not key:
             raise AssistantError("Voice needs a voice API key in Settings.")
         try:
@@ -17,6 +17,9 @@ class OpenAISpeechToText(SpeechToText):
                     headers={"Authorization": "Bearer " + key.get_secret_value()},
                     data={"model": self.settings.stt_model}, files={"file": (filename, data)})
                 response.raise_for_status()
-                return response.json()["text"]
-        except (httpx.HTTPError, ValueError, KeyError) as exc:
+                text = response.json()["text"]
+                if not isinstance(text, str) or not text.strip():
+                    raise ValueError("Invalid transcription")
+                return text
+        except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
             raise AssistantError("Transcription failed. Check the voice API key, model and network.") from exc

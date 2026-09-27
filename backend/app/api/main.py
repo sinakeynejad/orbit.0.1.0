@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 import secrets
+import sqlite3
 import sys
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -62,6 +63,10 @@ def create_app(settings=None, provider=None):
     @app.exception_handler(AssistantError)
     async def assistant_error(request, exc):
         return JSONResponse({"detail": str(exc)}, status_code=400)
+
+    @app.exception_handler(sqlite3.Error)
+    async def database_error(request, exc):
+        return JSONResponse({"detail": "Cannot update conversation storage. Check disk space and folder permissions, then retry."}, status_code=503)
 
     app.include_router(router)
     app.include_router(settings_router)

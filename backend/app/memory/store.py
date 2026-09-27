@@ -1,6 +1,7 @@
 import json
 import sqlite3
 import threading
+import logging
 from datetime import datetime, timezone
 from app.llm.schemas import Message
 from app.memory.conversation import Conversation
@@ -34,8 +35,15 @@ class Store:
         result = {}
         for sid, raw, custom_title in rows:
             conv = Conversation()
-            conv.custom_title = custom_title
-            conv.turns = [[Message.model_validate(m) for m in turn] for turn in json.loads(raw)]
+            try:
+                turns = json.loads(raw)
+                if not isinstance(turns, list) or any(not isinstance(t, list) for t in turns):
+                    raise ValueError("Invalid history shape")
+                conv.custom_title = custom_title if isinstance(custom_title, str) else None
+                conv.turns = [[Message.model_validate(m) for m in turn] for turn in turns][-conv.max_turns:]
+            except (ValueError, TypeError):
+                logging.getLogger(__name__).warning("Skipped an unreadable conversation; original database record preserved.")
+                continue
             result[sid] = conv
         return result
 

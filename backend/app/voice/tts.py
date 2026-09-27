@@ -8,7 +8,7 @@ class OpenAITextToSpeech(TextToSpeech):
         self.settings = settings
 
     async def speak(self, text):
-        key = self.settings.voice_api_key or self.settings.llm_api_key
+        key = self.settings.speech_api_key
         if not key:
             raise AssistantError("Voice needs a voice API key in Settings.")
         try:

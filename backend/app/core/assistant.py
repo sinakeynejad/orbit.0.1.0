@@ -15,18 +15,19 @@ class Assistant:
         if len(self.sessions) >= self.max_sessions:
             raise AssistantError("Session limit reached. Delete an unused session.")
         session_id = uuid4().hex
-        self.sessions[session_id] = (Conversation(), asyncio.Lock())
+        conversation = Conversation()
         if self.store:
-            self.store.save(session_id, self.sessions[session_id][0])
+            self.store.save(session_id, conversation)
+        self.sessions[session_id] = (conversation, asyncio.Lock())
         return session_id
 
     def delete_session(self, session_id):
         pair = self.sessions.get(session_id)
         if pair and pair[1].locked():
             raise AssistantError("Session is busy.")
-        self.sessions.pop(session_id, None)
         if self.store:
             self.store.delete(session_id)
+        self.sessions.pop(session_id, None)
 
     async def chat(self, session_id, text, confirm=None, emit=None):
         if not text.strip() or len(text) > 16000:

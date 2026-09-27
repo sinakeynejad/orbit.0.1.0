@@ -47,7 +47,7 @@ class OpenAIProvider(LLMProvider):
             raise ProviderError(f"Model service rejected the request (HTTP {exc.response.status_code}). Check model, quota and credentials.") from exc
         except httpx.HTTPError as exc:
             raise ProviderError("Cannot connect to the model service.") from exc
-        except (ValueError, KeyError, TypeError, IndexError) as exc:
+        except (AttributeError, ValueError, KeyError, TypeError, IndexError) as exc:
             raise ProviderError("Model returned an invalid response.") from exc
 
     async def aclose(self):

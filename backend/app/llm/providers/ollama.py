@@ -56,7 +56,7 @@ class OllamaProvider(LLMProvider):
             raise ProviderError("Language model request timed out.") from exc
         except httpx.HTTPError as exc:
             raise ProviderError("Cannot reach the language model or the request was rejected.") from exc
-        except (KeyError, TypeError, ValueError, ValidationError) as exc:
+        except (AttributeError, KeyError, TypeError, ValueError, ValidationError) as exc:
             raise ProviderError("Language model returned an invalid response.") from exc
 
     async def aclose(self):

@@ -26,7 +26,7 @@ async def settings(request: Request):
     c = request.app.state.config
     return {"llm_provider": c.llm_provider, "llm_model": c.llm_model,
             "llm_base_url": str(c.llm_base_url or ""), "has_api_key": bool(c.llm_api_key),
-            "has_voice_key": bool(c.voice_api_key or c.llm_api_key),
+            "has_voice_key": bool(c.speech_api_key),
             "workspace_dir": str(c.workspace_dir), "allowed_applications": c.allowed_applications,
             "stt_model": c.stt_model, "tts_model": c.tts_model}
 
@@ -127,6 +127,11 @@ async def update_settings(body: SettingsUpdate, request: Request):
         path = Path(executable)
         if not alias.strip() or not path.is_absolute() or not path.is_file() or path.suffix.lower() != ".exe":
             raise AssistantError("Applications must have an alias and an existing absolute .exe path.")
+    saved = state.config
+    saved_url = str(saved.llm_base_url or "https://api.openai.com/v1").rstrip("/")
+    new_url = str(config.llm_base_url or "https://api.openai.com/v1").rstrip("/")
+    if config.llm_provider == "openai" and config.llm_api_key and body.llm_api_key is None and (saved.llm_provider != "openai" or saved_url != new_url):
+        raise AssistantError("Enter an API key for the new provider or Base URL before saving.")
     registry = create_registry(config)
     new_provider = create_provider(config)
     raw = config.model_dump(mode="json", exclude={"api_token"})
