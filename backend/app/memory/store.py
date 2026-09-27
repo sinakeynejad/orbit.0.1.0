@@ -16,19 +16,25 @@ class Store:
         CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY, time TEXT, event TEXT);
         """)
 
+        columns = {row[1] for row in self.db.execute("PRAGMA table_info(sessions)")}
+        if "custom_title" not in columns:
+            self.db.execute("ALTER TABLE sessions ADD COLUMN custom_title TEXT")
+            self.db.commit()
+
     def save(self, session_id, conversation):
         turns = [[m.model_dump(mode="json") for m in turn] for turn in conversation.turns]
-        title = next((m.content[:60] for turn in conversation.turns for m in turn if m.role.value == "user"), "New conversation")
+        title = conversation.title
         with self.lock, self.db:
-            self.db.execute("INSERT OR REPLACE INTO sessions VALUES (?, ?, ?)",
-                            (session_id, title, json.dumps(turns)))
+            self.db.execute("INSERT OR REPLACE INTO sessions (id, title, turns, custom_title) VALUES (?, ?, ?, ?)",
+                            (session_id, title, json.dumps(turns), conversation.custom_title))
 
     def load(self):
         with self.lock:
-            rows = self.db.execute("SELECT id, turns FROM sessions ORDER BY rowid DESC LIMIT 100").fetchall()
+            rows = self.db.execute("SELECT id, turns, custom_title FROM sessions ORDER BY rowid DESC LIMIT 100").fetchall()
         result = {}
-        for sid, raw in rows:
+        for sid, raw, custom_title in rows:
             conv = Conversation()
+            conv.custom_title = custom_title
             conv.turns = [[Message.model_validate(m) for m in turn] for turn in json.loads(raw)]
             result[sid] = conv
         return result

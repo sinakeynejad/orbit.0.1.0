@@ -39,6 +39,7 @@ def main():
         print("Desktop smoke test passed", flush=True)
         return
     url = f"http://127.0.0.1:{port}/#token={config.api_token.get_secret_value()}"
+    webview.settings["ALLOW_DOWNLOADS"] = True
     webview.create_window("Orbit · Desktop Assistant", url, width=1200, height=820, min_size=(780, 600))
     try:
         webview.start(gui="edgechromium", private_mode=True)
